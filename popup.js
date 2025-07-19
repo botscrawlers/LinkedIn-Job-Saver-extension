@@ -1,17 +1,9 @@
 
 function extractJobData() {
-    // const jobTitle = document.querySelector("body > div.application-outlet > div.authentication-outlet > div.scaffold-layout.scaffold-layout--breakpoint-xl.scaffold-layout--main-aside.scaffold-layout--reflow.job-view-layout.jobs-details > div > div > main > div.job-view-layout.jobs-details > div:nth-child(1) > div > div:nth-child(1) > div > div > div > div.display-flex.justify-space-between.flex-wrap.mt2 > div > h1")?.innerText || ''
-    // const companyElement = document.querySelector("body > div.application-outlet > div.authentication-outlet > div.scaffold-layout.scaffold-layout--breakpoint-xl.scaffold-layout--main-aside.scaffold-layout--reflow.job-view-layout.jobs-details > div > div > main > div.job-view-layout.jobs-details > div:nth-child(1) > div > div:nth-child(1) > div > div > div > div.display-flex.align-items-center > div.display-flex.align-items-center.flex-1 > div > a");
-    // const companyName = companyElement?.textContent.trim() || '';
-    // const companyHref = companyElement?.href || '';
-    // const acercaDelEmpleo = document.querySelector("#job-details > div")?.textContent.trim() || ''
-    // const contratanteLink = document.querySelector("body > div.application-outlet > div.authentication-outlet > div.scaffold-layout.scaffold-layout--breakpoint-xl.scaffold-layout--main-aside.scaffold-layout--reflow.job-view-layout.jobs-details > div > div > main > div.job-view-layout.jobs-details > div:nth-child(1) > div > div:nth-child(3) > div.job-details-people-who-can-help__section > div > div > a")?.href || ''
-    // const contratanteNombre = document.querySelector("body > div.application-outlet > div.authentication-outlet > div.scaffold-layout.scaffold-layout--breakpoint-xl.scaffold-layout--main-aside.scaffold-layout--reflow.job-view-layout.jobs-details > div > div > main > div.job-view-layout.jobs-details > div:nth-child(1) > div > div:nth-child(3) > div.job-details-people-who-can-help__section > div > div > div.hirer-card__hirer-information > a > span > strong")?.innerText.trim() || ''
-    // const contratanteLink = document.querySelector("a[href*='/in/']")?.href || '';
-    // const contratanteNombre = document.querySelector("strong")?.innerText.trim() || '';
-    // const jobTitle = document.querySelector("h1")?.innerText || '';
-
-    const jobTitle = document.querySelector(".job-details-jobs-unified-top-card__job-title")?.innerText.trim() || '';
+    
+    const jobTitleElement = document.querySelector(".job-details-jobs-unified-top-card__job-title a");
+    const jobTitle = jobTitleElement?.innerText.trim() || '';
+    const jobUrl = jobTitleElement ? jobTitleElement.href : '';
     const companyWrapper = document.querySelector(".job-details-jobs-unified-top-card__company-name a");
     const companyName = companyWrapper?.innerText.trim() || '';
     const companyHref = companyWrapper?.href || '';
@@ -22,6 +14,7 @@ function extractJobData() {
 
     return {
         jobTitle,
+        jobUrl, 
         companyName,
         companyHref,
         acercaDelEmpleo,
@@ -68,9 +61,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         postData = result;
 
         if (!postData || Object.values(postData).every(v => !v)) {
+            saveBtn.setAttribute('disabled', 'true');
             showWarning("⚠️ No se encontraron datos para mostrar.");
         } else {
             renderPreview(postData);
+            saveBtn.removeAttribute('disabled');
         }
     } catch (err) {
         console.error("❌ Error al extraer datos:", err);
@@ -143,6 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderPreview(data) {
         const orderedKeys = [
             ['jobTitle', 'Titulo'],
+            ['jobUrl', 'Publicacion Link'],
             ['contratanteNombre', 'Contratante'],
             ['contratanteLink', 'Contratante Link'],
             ['companyName', 'Compañía'],
