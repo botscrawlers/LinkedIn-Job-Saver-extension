@@ -1,9 +1,24 @@
 
 function extractJobData() {
     
-    const jobTitleElement = document.querySelector(".job-details-jobs-unified-top-card__job-title a");
-    const jobTitle = jobTitleElement?.innerText.trim() || '';
-    const jobUrl = jobTitleElement ? jobTitleElement.href : '';
+    const container = document.querySelector(".job-details-jobs-unified-top-card__job-title");
+
+    let jobTitle = '';
+    let jobUrl = '';
+
+    if (container) {
+        const link = container.querySelector('a');
+        const heading = container.querySelector('h1');
+
+        if (link) {
+            jobTitle = link.innerText.trim();
+            jobUrl = link.href;
+        } else if (heading) {
+            jobTitle = heading.innerText.trim();
+            jobUrl = window.location.href; 
+        }
+    }
+
     const companyWrapper = document.querySelector(".job-details-jobs-unified-top-card__company-name a");
     const companyName = companyWrapper?.innerText.trim() || '';
     const companyHref = companyWrapper?.href || '';
