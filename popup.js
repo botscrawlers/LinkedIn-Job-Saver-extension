@@ -22,7 +22,8 @@ function extractJobData() {
     const companyWrapper = document.querySelector(".job-details-jobs-unified-top-card__company-name a");
     const companyName = companyWrapper?.innerText.trim() || '';
     const companyHref = companyWrapper?.href || '';
-    const acercaDelEmpleo = document.querySelector("#job-details > div")?.textContent.trim() || '';
+    // const acercaDelEmpleo = document.querySelector("#job-details > div")?.textContent.trim() || '';
+    const acercaDelEmpleo = document.querySelector('#job-details .mt4')?.textContent.trim() || '';
     const hirerDiv = document.querySelector(".hirer-card__hirer-information a");
     const contratanteLink = hirerDiv?.href || '';
     const contratanteNombre = hirerDiv?.querySelector("strong")?.innerText.trim() || '';
