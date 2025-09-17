@@ -1,51 +1,81 @@
 async function extractJobData() {
-    const jobUrl = (function getCleanJobUrl() {
-        const match = window.location.href.match(/\/jobs\/view\/(\d+)/);
-        return match ? `https://www.linkedin.com/jobs/view/${match[1]}/` : "";
-    })();
 
-    const acercaDelEmpleo = (function getAcercaDelEmpleo() {
-        const caja = document.querySelector('[data-testid="expandable-text-box"]');
-        if (!caja) return "";
-        return Array.from(caja.querySelectorAll("p, li"))
+    function getAcercaDelEmpleo(container) {
+        if (!container) return "";
+        return Array.from(container.querySelectorAll("p, li"))
             .map(n => n.textContent.trim())
             .filter(t => t)
             .map(t => t.replace(/\s*\n\s*/g, "\n").trim())
             .join("\n");
-    })();
+    }
 
-    const { urlEmpresa: companyHref, jobTitle, companyName } = (function getDatosEmpresa() {
-        const contenedor = document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.JobDetails"]');
-        if (!contenedor) return {};
-        const empresaLink = contenedor.querySelector('a');
-        const urlEmpresa = empresaLink ? empresaLink.href : null;
-        const parrafos = contenedor.querySelectorAll('p');
-        return {
-            urlEmpresa,
-            jobTitle: parrafos[0]?.textContent.trim(),
-            companyName: parrafos[1]?.textContent.trim()
-        };
-    })();
+    var isSearchPage = window.location.href.includes('/jobs/search/');
+    var isViewPage = window.location.href.includes('/jobs/view/');
 
-    const { contratanteLink, contratanteNombre } = (function getInfoContratante() {
-        const contenedor = document.querySelector('[data-sdui-component="com.linkedin.sdui.generated.jobseeker.dsl.impl.peopleWhoCanHelp"]');
-        let link = null, nombre = null;
-        if (contenedor) {
-            const primerEnlace = Array.from(contenedor.querySelectorAll('a'))
-                .find(a => a.href.includes('linkedin.com/in/'));
-            if (primerEnlace) {
-                link = primerEnlace.href;
-                nombre = primerEnlace.querySelector('p')?.textContent.trim()
-                        || primerEnlace.nextElementSibling?.textContent.trim()
-                        || null;
+    if(isSearchPage === false && isViewPage === false ){
+        const isPreload = window.location.href.includes('/preload/');
+        if (isPreload) isSearchPage = true ; 
+    }
+
+    let jobUrl = '', jobTitle = '', companyName = '', companyHref = '', acercaDelEmpleo = '', contratanteLink = '', contratanteNombre = '';
+
+    if (isSearchPage) {
+        const container = document.querySelector(".job-details-jobs-unified-top-card__job-title");
+        if (container) {
+            const link = container.querySelector('a');
+            const heading = container.querySelector('h1');
+            if (link) {
+                jobTitle = link.innerText.trim();
+                const match = link.href.match(/\/jobs\/view\/(\d+)/);
+                jobUrl = match ? `https://www.linkedin.com/jobs/view/${match[1]}/` : '';
+            } else if (heading) {
+                jobTitle = heading.innerText.trim();
             }
         }
-        return { contratanteLink: link, contratanteNombre: nombre };
-    })();
 
-    return { jobUrl, acercaDelEmpleo, companyHref, jobTitle, companyName, contratanteLink, contratanteNombre };
+        const companyWrapper = document.querySelector(".job-details-jobs-unified-top-card__company-name a");
+        companyName = companyWrapper?.innerText.trim() || '';
+        companyHref = companyWrapper?.href || '';
+
+        const details = document.querySelector('#job-details .mt4');
+        acercaDelEmpleo = getAcercaDelEmpleo(details);
+
+        const hirerDiv = document.querySelector(".hirer-card__hirer-information a");
+        contratanteLink = hirerDiv?.href || '';
+        contratanteNombre = hirerDiv?.querySelector("strong")?.innerText.trim() || '';
+    }
+
+    if (isViewPage) {
+        const match = window.location.href.match(/\/jobs\/view\/(\d+)/);
+        jobUrl = match ? `https://www.linkedin.com/jobs/view/${match[1]}/` : '';
+
+        const caja = document.querySelector('[data-testid="expandable-text-box"]');
+        acercaDelEmpleo = getAcercaDelEmpleo(caja);
+
+        const contenedor = document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.JobDetails"]');
+        if (contenedor) {
+            const empresaLink = contenedor.querySelector('a');
+            companyHref = empresaLink?.href || '';
+            const parrafos = contenedor.querySelectorAll('p');
+            jobTitle = parrafos[0]?.textContent.trim() || '';
+            companyName = parrafos[1]?.textContent.trim() || '';
+        }
+
+        const contratanteCont = document.querySelector('[data-sdui-component="com.linkedin.sdui.generated.jobseeker.dsl.impl.peopleWhoCanHelp"]');
+        if (contratanteCont) {
+            const primerEnlace = Array.from(contratanteCont.querySelectorAll('a'))
+                .find(a => a.href.includes('linkedin.com/in/'));
+            if (primerEnlace) {
+                contratanteLink = primerEnlace.href;
+                contratanteNombre = primerEnlace.querySelector('p')?.textContent.trim()
+                    || primerEnlace.nextElementSibling?.textContent.trim()
+                    || '';
+            }
+        }
+    }
+
+    return { jobUrl, jobTitle, companyName, companyHref, acercaDelEmpleo, contratanteLink, contratanteNombre };
 }
-
 
 document.addEventListener('DOMContentLoaded', async () => {
     const saveBtn = document.getElementById('save');
