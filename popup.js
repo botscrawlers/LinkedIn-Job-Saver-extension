@@ -1,42 +1,49 @@
+async function extractJobData() {
+    const jobUrl = (function getCleanJobUrl() {
+        const match = window.location.href.match(/\/jobs\/view\/(\d+)/);
+        return match ? `https://www.linkedin.com/jobs/view/${match[1]}/` : "";
+    })();
 
-function extractJobData() {
-    
-    const container = document.querySelector(".job-details-jobs-unified-top-card__job-title");
+    const acercaDelEmpleo = (function getAcercaDelEmpleo() {
+        const caja = document.querySelector('[data-testid="expandable-text-box"]');
+        if (!caja) return "";
+        return Array.from(caja.querySelectorAll("p, li"))
+            .map(n => n.textContent.trim())
+            .filter(t => t)
+            .map(t => t.replace(/\s*\n\s*/g, "\n").trim())
+            .join("\n");
+    })();
 
-    let jobTitle = '';
-    let jobUrl = '';
+    const { urlEmpresa: companyHref, jobTitle, companyName } = (function getDatosEmpresa() {
+        const contenedor = document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.JobDetails"]');
+        if (!contenedor) return {};
+        const empresaLink = contenedor.querySelector('a');
+        const urlEmpresa = empresaLink ? empresaLink.href : null;
+        const parrafos = contenedor.querySelectorAll('p');
+        return {
+            urlEmpresa,
+            jobTitle: parrafos[0]?.textContent.trim(),
+            companyName: parrafos[1]?.textContent.trim()
+        };
+    })();
 
-    if (container) {
-        const link = container.querySelector('a');
-        const heading = container.querySelector('h1');
-
-        if (link) {
-            jobTitle = link.innerText.trim();
-            jobUrl = link.href;
-        } else if (heading) {
-            jobTitle = heading.innerText.trim();
-            jobUrl = window.location.href; 
+    const { contratanteLink, contratanteNombre } = (function getInfoContratante() {
+        const contenedor = document.querySelector('[data-sdui-component="com.linkedin.sdui.generated.jobseeker.dsl.impl.peopleWhoCanHelp"]');
+        let link = null, nombre = null;
+        if (contenedor) {
+            const primerEnlace = Array.from(contenedor.querySelectorAll('a'))
+                .find(a => a.href.includes('linkedin.com/in/'));
+            if (primerEnlace) {
+                link = primerEnlace.href;
+                nombre = primerEnlace.querySelector('p')?.textContent.trim()
+                        || primerEnlace.nextElementSibling?.textContent.trim()
+                        || null;
+            }
         }
-    }
+        return { contratanteLink: link, contratanteNombre: nombre };
+    })();
 
-    const companyWrapper = document.querySelector(".job-details-jobs-unified-top-card__company-name a");
-    const companyName = companyWrapper?.innerText.trim() || '';
-    const companyHref = companyWrapper?.href || '';
-    // const acercaDelEmpleo = document.querySelector("#job-details > div")?.textContent.trim() || '';
-    const acercaDelEmpleo = document.querySelector('#job-details .mt4')?.textContent.trim() || '';
-    const hirerDiv = document.querySelector(".hirer-card__hirer-information a");
-    const contratanteLink = hirerDiv?.href || '';
-    const contratanteNombre = hirerDiv?.querySelector("strong")?.innerText.trim() || '';
-
-    return {
-        jobTitle,
-        jobUrl, 
-        companyName,
-        companyHref,
-        acercaDelEmpleo,
-        contratanteLink,
-        contratanteNombre
-    };
+    return { jobUrl, acercaDelEmpleo, companyHref, jobTitle, companyName, contratanteLink, contratanteNombre };
 }
 
 
@@ -49,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dataTableBody = document.getElementById('dataTableBody');
 
     if (!saveBtn || !spinner || !status || !openSheetBtn || !dataPreview || !dataTableBody) {
-        console.error("⛔ Error: elementos del DOM no encontrados.");
         return;
     }
 
@@ -84,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveBtn.removeAttribute('disabled');
         }
     } catch (err) {
-        console.error("❌ Error al extraer datos:", err);
         showError("❌ No se pudo acceder al contenido de la página.");
     }
 
@@ -111,7 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             const text = await res.text();
-            console.log("✅ Respuesta del macro:", text);
             showSuccess('✅ Postulación guardada.');
 
             const match = text.match(/https:\/\/docs\.google\.com\/spreadsheets\/[^\s"]+/);
@@ -120,7 +124,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 openSheetBtn.onclick = () => window.open(match[0], '_blank');
             }
         } catch (err) {
-            console.error("❌ Error al guardar:", err);
             showError('❌ Error al guardar los datos.');
         } finally {
             spinner.classList.add('d-none');
