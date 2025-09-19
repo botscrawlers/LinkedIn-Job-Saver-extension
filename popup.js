@@ -9,13 +9,12 @@ async function extractJobData() {
             .join("\n");
     }
 
-    var isSearchPage = window.location.href.includes('/jobs/search/');
-    var isViewPage = window.location.href.includes('/jobs/view/');
-
-    if(isSearchPage === false && isViewPage === false ){
-        const isPreload = window.location.href.includes('/preload/');
-        if (isPreload) isSearchPage = true ; 
-    }
+    const { href } = window.location;
+    const isViewPage = href.includes('/jobs/view/');
+    const isSearchPage =
+        href.includes('/jobs/search/') ||
+        href.includes('/jobs/collections/') ||
+        href.includes('/preload/');
 
     let jobUrl = '', jobTitle = '', companyName = '', companyHref = '', acercaDelEmpleo = '', contratanteLink = '', contratanteNombre = '';
 
