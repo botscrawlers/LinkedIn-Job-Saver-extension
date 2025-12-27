@@ -9,16 +9,15 @@ async function extractJobData() {
             .join("\n");
     }
 
-    const { href } = window.location;
-    const isViewPage = href.includes('/jobs/view/');
-    const isSearchPage =
-        href.includes('/jobs/search/') ||
-        href.includes('/jobs/collections/') ||
-        href.includes('/preload/');
+    function searchPage(){
+        let jobUrl = '';
+        let jobTitle = '';
+        let companyName = '';
+        let companyHref = '';
+        let acercaDelEmpleo = '';
+        let contratanteLink = '';
+        let contratanteNombre = '';
 
-    let jobUrl = '', jobTitle = '', companyName = '', companyHref = '', acercaDelEmpleo = '', contratanteLink = '', contratanteNombre = '';
-
-    if (isSearchPage) {
         const container = document.querySelector(".job-details-jobs-unified-top-card__job-title");
         if (container) {
             const link = container.querySelector('a');
@@ -42,9 +41,19 @@ async function extractJobData() {
         const hirerDiv = document.querySelector(".hirer-card__hirer-information a");
         contratanteLink = hirerDiv?.href || '';
         contratanteNombre = hirerDiv?.querySelector("strong")?.innerText.trim() || '';
+
+        return { jobUrl, jobTitle, companyName, companyHref, acercaDelEmpleo, contratanteLink, contratanteNombre  }
     }
 
-    if (isViewPage) {
+    function searchPage2(){
+        let jobUrl = '';
+        let jobTitle = '';
+        let companyName = '';
+        let companyHref = '';
+        let acercaDelEmpleo = '';
+        let contratanteLink = '';
+        let contratanteNombre = '';
+
         const match = window.location.href.match(/\/jobs\/view\/(\d+)/);
         jobUrl = match ? `https://www.linkedin.com/jobs/view/${match[1]}/` : '';
 
@@ -71,6 +80,52 @@ async function extractJobData() {
                     || '';
             }
         }
+
+        return { jobUrl, jobTitle, companyName, companyHref, acercaDelEmpleo, contratanteLink, contratanteNombre  }
+    }
+
+
+    function pick(primary, fallback) {
+        const result = {};
+        for (const key in primary) {
+            result[key] = primary[key] || fallback[key] || '';
+        }
+        return result;
+    }
+
+    const { href } = window.location;
+    const isViewPage = href.includes('/jobs/view/');
+    const isSearchPage =
+        href.includes('/jobs/search/') ||
+        href.includes('/jobs/collections/') ||
+        href.includes('/preload/');
+
+    let jobUrl = '', jobTitle = '', companyName = '', companyHref = '', acercaDelEmpleo = '', contratanteLink = '', contratanteNombre = '';
+
+    if (isSearchPage) {
+        ({
+            jobUrl,
+            jobTitle,
+            companyName,
+            companyHref,
+            acercaDelEmpleo,
+            contratanteLink,
+            contratanteNombre
+        } = searchPage());
+    }
+
+    if (isViewPage) {
+        const data = pick(searchPage2(), searchPage());
+        ({
+            jobUrl,
+            jobTitle,
+            companyName,
+            companyHref,
+            acercaDelEmpleo,
+            contratanteLink,
+            contratanteNombre
+        } = data);
+        
     }
 
     return { jobUrl, jobTitle, companyName, companyHref, acercaDelEmpleo, contratanteLink, contratanteNombre };
